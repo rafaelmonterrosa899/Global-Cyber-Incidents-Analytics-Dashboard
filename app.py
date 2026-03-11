@@ -3,162 +3,284 @@ import pandas as pd
 from databricks import sql
 import plotly.express as px
 import plotly.graph_objects as go
-import time
+import numpy as np
 
-# Configurations
-st.set_page_config(page_title="Cyber Incidents Dashboard", page_icon="🛡️", layout="wide", initial_sidebar_state="expanded")
+# ─────────────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────────────
+st.set_page_config(
+    page_title="Cyber Incidents — Control Panel",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- Theme Toggle ---
-if 'theme' not in st.session_state:
-    st.session_state.theme = 'dark'
+# ─────────────────────────────────────────────
+# CUSTOM CSS — Dark Gold/Cyan Control Panel
+# ─────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-# Theme definitions
-THEMES = {
-    'dark': {
-        'bg': '#0e1117',
-        'card_bg': 'rgba(30, 35, 45, 0.7)',
-        'card_border': 'rgba(255, 255, 255, 0.05)',
-        'card_hover_border': 'rgba(79, 172, 254, 0.3)',
-        'chart_bg': 'rgba(22, 27, 34, 0.5)',
-        'chart_border': 'rgba(255, 255, 255, 0.05)',
-        'header_color': '#ffffff',
-        'sub_header': '#8b9bb4',
-        'kpi_title': '#a0aec0',
-        'kpi_value': '#ffffff',
-        'kpi_value_gradient': 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)',
-        'section_title': '#ffffff',
-        'shadow': 'rgba(0, 0, 0, 0.2)',
-        'shadow_hover': 'rgba(0, 0, 0, 0.3)',
-        'plotly_template': 'plotly_dark',
-        'plotly_bg': 'rgba(0,0,0,0)',
-        'plotly_paper': 'rgba(0,0,0,0)',
-        'geo_bg': 'rgba(0,0,0,0)',
-    },
-    'light': {
-        'bg': '#f8f9fc',
-        'card_bg': 'rgba(255, 255, 255, 0.95)',
-        'card_border': 'rgba(0, 0, 0, 0.08)',
-        'card_hover_border': 'rgba(37, 99, 235, 0.4)',
-        'chart_bg': 'rgba(255, 255, 255, 0.9)',
-        'chart_border': 'rgba(0, 0, 0, 0.06)',
-        'header_color': '#1a202c',
-        'sub_header': '#64748b',
-        'kpi_title': '#64748b',
-        'kpi_value': '#1e293b',
-        'kpi_value_gradient': 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        'section_title': '#1e293b',
-        'shadow': 'rgba(0, 0, 0, 0.06)',
-        'shadow_hover': 'rgba(0, 0, 0, 0.12)',
-        'plotly_template': 'plotly_white',
-        'plotly_bg': 'rgba(0,0,0,0)',
-        'plotly_paper': 'rgba(0,0,0,0)',
-        'geo_bg': 'rgba(0,0,0,0)',
-    }
+*, *::before, *::after { box-sizing: border-box; }
+
+.stApp {
+    background: #0a0e17;
+    font-family: 'Outfit', sans-serif;
 }
 
-t = THEMES[st.session_state.theme]
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 0 !important;
+    max-width: 100% !important;
+}
 
-# Custom CSS — dynamic based on theme
-st.markdown(f"""
-<style>
-    /* Global Styles */
-    .stApp {{
-        background-color: {t['bg']};
-    }}
-    
-    /* Headers */
-    .dashboard-header {{
-        color: {t['header_color']};
-        font-weight: 900;
-        font-size: 2.8rem;
-        margin-bottom: 5px;
-    }}
-    .sub-header {{
-        color: {t['sub_header']};
-        font-size: 1.1rem;
-        margin-bottom: 30px;
-    }}
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d1220 0%, #0a0e17 100%);
+    border-right: 1px solid rgba(212, 175, 55, 0.15);
+}
+section[data-testid="stSidebar"] .stMarkdown h3,
+section[data-testid="stSidebar"] .stMarkdown h2 {
+    color: #d4af37 !important;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+}
+section[data-testid="stSidebar"] label {
+    color: #8a93a6 !important;
+    font-family: 'Outfit', sans-serif;
+}
 
-    /* Section Titles — white & bold */
-    .stSubheader, h2, h3,
-    [data-testid="stMarkdownContainer"] h2,
-    [data-testid="stMarkdownContainer"] h3 {{
-        color: {t['section_title']} !important;
-        font-weight: 700 !important;
-    }}
+/* Top Bar */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    margin-bottom: 24px;
+}
+.top-bar-left h1 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 1.7rem;
+    margin: 0;
+    background: linear-gradient(135deg, #d4af37 0%, #f5d76e 50%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.top-bar-left p {
+    color: #4a5568;
+    font-size: 0.8rem;
+    margin: 2px 0 0 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.breadcrumb {
+    color: #4a5568;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+.breadcrumb span { color: #d4af37; }
 
-    /* KPI Cards */
-    .kpi-container {{
-        background: {t['card_bg']};
-        border: 1px solid {t['card_border']};
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 10px 30px {t['shadow']};
-        backdrop-filter: blur(10px);
-        text-align: center;
-        transition: all 0.3s ease;
-        height: 140px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }}
-    .kpi-container:hover {{
-        transform: translateY(-5px);
-        border-color: {t['card_hover_border']};
-        box-shadow: 0 15px 35px {t['shadow_hover']};
-    }}
-    .kpi-title {{
-        color: {t['kpi_title']};
-        font-size: 1rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 12px;
-    }}
-    .kpi-value {{
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin: 0;
-        background: {t['kpi_value_gradient']};
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }}
-    .kpi-subtitle {{
-        color: #ef4444;
-        font-size: 0.9rem;
-        margin-top: 8px;
-        font-weight: 500;
-    }}
-    
-    /* Charts Container */
-    .chart-box {{
-        background: {t['chart_bg']};
-        border: 1px solid {t['chart_border']};
-        border-radius: 12px;
-        padding: 15px;
-        margin-top: 20px;
-    }}
+/* KPI Cards */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-card {
+    background: linear-gradient(135deg, #111827 0%, #0f1623 100%);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 18px;
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.kpi-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 18px 18px 0 0;
+}
+.kpi-card.cyan::before { background: linear-gradient(90deg, #00d4ff, #0099cc); }
+.kpi-card.gold::before { background: linear-gradient(90deg, #d4af37, #f5d76e); }
+.kpi-card.rose::before { background: linear-gradient(90deg, #ff4757, #ff6b81); }
+.kpi-card.violet::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+
+.kpi-icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+}
+.kpi-icon.cyan { background: rgba(0, 212, 255, 0.12); }
+.kpi-icon.gold { background: rgba(212, 175, 55, 0.12); }
+.kpi-icon.rose { background: rgba(255, 71, 87, 0.12); }
+.kpi-icon.violet { background: rgba(168, 85, 247, 0.12); }
+
+.kpi-value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    color: #f1f5f9;
+    margin: 0;
+    line-height: 1.1;
+}
+.kpi-label {
+    font-size: 0.78rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+.kpi-sub {
+    font-size: 0.72rem;
+    color: #475569;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Section Title */
+.section-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.section-title .dot.live {
+    background: #ff4757;
+    box-shadow: 0 0 8px rgba(255,71,87,0.6);
+    animation: pulse-dot 1.5s infinite;
+}
+
+/* Chart Panels */
+.panel {
+    background: linear-gradient(145deg, #111827 0%, #0d1220 100%);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+.panel:hover { border-color: rgba(212,175,55,0.1); }
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.panel-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #d4af37;
+    background: rgba(212,175,55,0.08);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(212,175,55,0.15);
+}
+
+/* Colored Stat Cards */
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+}
+.stat-card {
+    border-radius: 14px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card.cyan-bg { background: linear-gradient(135deg, #0e7490, #06b6d4); }
+.stat-card.rose-bg { background: linear-gradient(135deg, #be123c, #f43f5e); }
+.stat-card.violet-bg { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+.stat-card.amber-bg { background: linear-gradient(135deg, #b45309, #f59e0b); }
+.stat-card-value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: #fff;
+    margin: 0;
+}
+.stat-card-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.stat-card-sub {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.stat-card-icon {
+    position: absolute;
+    top: 14px; right: 16px;
+    font-size: 1.4rem;
+    opacity: 0.3;
+}
+
+/* Animations */
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(255,71,87,0.6); }
+    50% { opacity: 0.4; box-shadow: 0 0 12px rgba(255,71,87,0.9); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0e17; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+
+/* Expander */
+.streamlit-expanderHeader {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 600 !important;
+    color: #d4af37 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# Databricks Connection Function
+
+# ─────────────────────────────────────────────
+# DATABRICKS
+# ─────────────────────────────────────────────
 @st.cache_resource(show_spinner=False)
 def get_databricks_connection():
     try:
-        connection = sql.connect(
+        return sql.connect(
             server_hostname=st.secrets["databricks"]["server_hostname"],
             http_path=st.secrets["databricks"]["http_path"],
             access_token=st.secrets["databricks"]["access_token"],
             _tls_verify_hostname=False,
             _tls_trust_all=True
         )
-        return connection
     except Exception as e:
-        st.error(f"Error connecting to Databricks: {e}")
+        st.error(f"Connection Error: {e}")
         return None
 
-# Fetch Data Function
 @st.cache_data(ttl=600, show_spinner=False)
 def fetch_data(_connection, query):
     try:
@@ -168,261 +290,333 @@ def fetch_data(_connection, query):
             columns = [desc[0] for desc in cursor.description]
             return pd.DataFrame(result, columns=columns)
     except Exception as e:
-        st.error(f"Error fetching data: {e}")
+        st.error(f"Query Error: {e}")
         return pd.DataFrame()
 
-# Formatting Helper
+
+# ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
 def format_currency(val):
-    if val >= 1_000_000_000:
-        return f"${val/1_000_000_000:.2f}B"
-    elif val >= 1_000_000:
-        return f"${val/1_000_000:.2f}M"
-    elif val >= 1_000:
-        return f"${val/1_000:.2f}K"
-    return f"${val:.2f}"
+    if val >= 1e9:   return f"${val/1e9:.2f}B"
+    if val >= 1e6:   return f"${val/1e6:.2f}M"
+    if val >= 1e3:   return f"${val/1e3:.1f}K"
+    return f"${val:.0f}"
 
 def format_number(val):
-    if val >= 1_000_000:
-        return f"{val/1_000_000:.2f}M"
-    elif val >= 1_000:
-        return f"{val/1_000:.2f}K"
+    if val >= 1e6:   return f"{val/1e6:.2f}M"
+    if val >= 1e3:   return f"{val/1e3:.1f}K"
     return f"{val:,.0f}"
 
-# Main Application
-def main():
-    st.markdown('<h1 class="dashboard-header">Global Cyber Incidents Analytics</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Interactive Gold Layer Insights on Corporate Cybersecurity Breaches</p>', unsafe_allow_html=True)
+COUNTRY_COORDS = {
+    "United States": (39.8,-98.5), "United Kingdom": (54,-2),
+    "Germany": (51.2,10.4), "France": (46.6,2.2),
+    "China": (35.9,104.2), "Japan": (36.2,138.3),
+    "India": (20.6,79), "Brazil": (-14.2,-51.9),
+    "Australia": (-25.3,133.8), "Canada": (56.1,-106.3),
+    "Russia": (61.5,105.3), "South Korea": (35.9,127.8),
+    "Mexico": (23.6,-102.6), "Italy": (41.9,12.5),
+    "Spain": (40.5,-3.7), "Netherlands": (52.1,5.3),
+    "Sweden": (60.1,18.6), "Switzerland": (46.8,8.2),
+    "Israel": (31,34.8), "Singapore": (1.4,103.8),
+    "South Africa": (-30.6,22.9), "Nigeria": (9.1,8.7),
+    "Argentina": (-38.4,-63.6), "Colombia": (4.6,-74.1),
+    "Indonesia": (-0.8,113.9), "Turkey": (39,35.2),
+    "Saudi Arabia": (23.9,45.1), "UAE": (23.4,53.8),
+    "Poland": (51.9,19.1), "Norway": (60.5,8.5),
+    "Egypt": (26.8,30.8), "Thailand": (15.9,100.9),
+    "Vietnam": (14.1,108.3), "Philippines": (12.9,121.8),
+    "Pakistan": (30.4,69.3), "Bangladesh": (23.7,90.4),
+    "Malaysia": (4.2,101.9), "Chile": (-35.7,-71.5),
+    "Peru": (-9.2,-75), "Ukraine": (48.4,31.2),
+    "Romania": (45.9,25), "Czech Republic": (49.8,15.5),
+    "Ireland": (53.1,-7.7), "New Zealand": (-40.9,174.9),
+    "Denmark": (56.3,9.5), "Finland": (61.9,25.7),
+    "Austria": (47.5,14.6), "Belgium": (50.5,4.5),
+    "Portugal": (39.4,-8.2), "Greece": (39.1,21.8),
+    "Hong Kong": (22.4,114.1), "Taiwan": (23.7,121),
+    "Kenya": (-0.02,37.9), "Ghana": (7.9,-1),
+    "Morocco": (31.8,-7.1), "Iran": (32.4,53.7),
+}
 
-    with st.spinner("Connecting securely to Databricks..."):
+PLOTLY_LAYOUT = dict(
+    template="plotly_dark",
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Outfit, sans-serif", color="#94a3b8"),
+    margin=dict(l=10, r=10, t=40, b=10),
+)
+
+
+# ─────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────
+def main():
+    # Top Bar
+    st.markdown("""
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <h1>🛡️ Cyber Incidents</h1>
+            <p>Control Panel — Gold Layer Analytics</p>
+        </div>
+        <div class="breadcrumb"><span>⌂</span> Home &gt; <span>Dashboard</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.spinner("Establishing secure connection..."):
         conn = get_databricks_connection()
-        
     if not conn:
         st.stop()
-        
-    # --- Sidebar Filters ---
-    st.sidebar.markdown("### ⚙️ Dashboard Controls")
-    
-    # Theme Toggle
-    theme_label = "🌙 Dark Mode" if st.session_state.theme == 'light' else "☀️ Light Mode"
-    if st.sidebar.button(theme_label, use_container_width=True):
-        st.session_state.theme = 'light' if st.session_state.theme == 'dark' else 'dark'
-        st.rerun()
-    
-    if st.sidebar.button("🔄 Refresh Dataset", use_container_width=True):
-        st.cache_data.clear()
-        
+
+    # Sidebar
+    st.sidebar.markdown("### ⚡ Navigation")
     st.sidebar.markdown("---")
-    
-    # Base query
+    if st.sidebar.button("🔄 Refresh Data", use_container_width=True):
+        st.cache_data.clear()
+    st.sidebar.markdown("---")
+
     query = "SELECT * FROM workspace.gold.incidents_master_gold LIMIT 5000"
-    
-    with st.spinner("Fetching Analytics Data..."):
+    with st.spinner("Loading analytics..."):
         df = fetch_data(conn, query)
-        
     if df.empty:
-        st.warning("No data retrieved. Please ensure the workspace.gold.incidents_master_gold table exists and has data.")
+        st.warning("No data in workspace.gold.incidents_master_gold")
         st.stop()
-        
-    # Convert types if necessary
-    numeric_columns = ['company_revenue_usd', 'employee_count', 'data_compromised_records', 'total_loss_usd', 'ransom_demanded_usd']
-    for col in numeric_columns:
+
+    # Type conversions
+    for col in ['company_revenue_usd','employee_count','data_compromised_records','total_loss_usd','ransom_demanded_usd']:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-            df[col] = df[col].fillna(0)
-            
-    # Interactive Sidebar Filters
-    st.sidebar.subheader("🎯 Filters")
-    
-    # Year filter
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    # Filters
+    st.sidebar.markdown("### 🎯 Filters")
     if 'incident_date' in df.columns:
-        df['year'] = pd.to_datetime(df['incident_date']).dt.year
+        df['year'] = pd.to_datetime(df['incident_date'], errors='coerce').dt.year
         years = ['All'] + sorted(df['year'].dropna().unique().tolist(), reverse=True)
-        selected_year = st.sidebar.selectbox("Incident Year", years)
-        if selected_year != 'All':
-            df = df[df['year'] == selected_year]
-            
-    # Attack Vector Filter
+        sel_year = st.sidebar.selectbox("Incident Year", years)
+        if sel_year != 'All': df = df[df['year'] == sel_year]
+
     if 'attack_vector_primary' in df.columns:
         vectors = ['All'] + sorted(df['attack_vector_primary'].dropna().unique().tolist())
-        selected_vector = st.sidebar.selectbox("Primary Attack Vector", vectors)
-        if selected_vector != 'All':
-            df = df[df['attack_vector_primary'] == selected_vector]
+        sel_vec = st.sidebar.selectbox("Attack Vector", vectors)
+        if sel_vec != 'All': df = df[df['attack_vector_primary'] == sel_vec]
 
-    # --- Dashboard Layout ---
-    
-    # 1. KPI Row
-    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
-    
+    if 'country_name' in df.columns:
+        countries = ['All'] + sorted(df['country_name'].dropna().unique().tolist())
+        sel_country = st.sidebar.selectbox("Country", countries)
+        if sel_country != 'All': df = df[df['country_name'] == sel_country]
+
+    # KPIs
     total_incidents = len(df)
     total_loss = df['total_loss_usd'].sum() if 'total_loss_usd' in df.columns else 0
     total_records = df['data_compromised_records'].sum() if 'data_compromised_records' in df.columns else 0
-    
-    avg_days_to_disclosure = 0
+    avg_days = 0
     if 'incident_date' in df.columns and 'disclosure_date' in df.columns:
         df['incident_date'] = pd.to_datetime(df['incident_date'], errors='coerce')
         df['disclosure_date'] = pd.to_datetime(df['disclosure_date'], errors='coerce')
         df['days_to_disclosure'] = (df['disclosure_date'] - df['incident_date']).dt.days
-        avg_days_to_disclosure = df['days_to_disclosure'].mean()
-    
-    with kpi_col1:
-        st.markdown(f"""
-        <div class="kpi-container">
-            <div class="kpi-title">Recorded Incidents</div>
+        avg_days = df['days_to_disclosure'].mean()
+        if pd.isna(avg_days): avg_days = 0
+    unique_countries = df['country_name'].nunique() if 'country_name' in df.columns else 0
+
+    st.markdown(f"""
+    <div class="kpi-row">
+        <div class="kpi-card cyan">
+            <div class="kpi-icon cyan">🔒</div>
             <div class="kpi-value">{format_number(total_incidents)}</div>
+            <div class="kpi-label">Total Incidents</div>
+            <div class="kpi-sub">Recorded breaches</div>
         </div>
-        """, unsafe_allow_html=True)
-        
-    with kpi_col2:
-        st.markdown(f"""
-        <div class="kpi-container">
-            <div class="kpi-title">Total Financial Loss</div>
+        <div class="kpi-card gold">
+            <div class="kpi-icon gold">💰</div>
             <div class="kpi-value">{format_currency(total_loss)}</div>
-            <div class="kpi-subtitle">Direct + Recovery + Fines</div>
+            <div class="kpi-label">Financial Loss</div>
+            <div class="kpi-sub">Direct + Recovery + Fines</div>
         </div>
-        """, unsafe_allow_html=True)
-        
-    with kpi_col3:
-        st.markdown(f"""
-        <div class="kpi-container">
-            <div class="kpi-title">Records Compromised</div>
+        <div class="kpi-card rose">
+            <div class="kpi-icon rose">📊</div>
             <div class="kpi-value">{format_number(total_records)}</div>
+            <div class="kpi-label">Records Leaked</div>
+            <div class="kpi-sub">Compromised data points</div>
         </div>
-        """, unsafe_allow_html=True)
-        
-    with kpi_col4:
-        st.markdown(f"""
-        <div class="kpi-container">
-            <div class="kpi-title">Avg Time to Disclosure</div>
-            <div class="kpi-value">{avg_days_to_disclosure:.1f} Days</div>
+        <div class="kpi-card violet">
+            <div class="kpi-icon violet">⏱️</div>
+            <div class="kpi-value">{avg_days:.0f} Days</div>
+            <div class="kpi-label">Avg Disclosure</div>
+            <div class="kpi-sub">Time to public report</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # ═══ ROW 1: MAP + SCATTER ═══
+    col_map, col_scatter = st.columns([1.3, 1])
 
-    # 2. Map and Main Relation Chart
-    col_map, col_scatter = st.columns([1.2, 1])
-    
     with col_map:
-        st.markdown('<div class="chart-box">', unsafe_allow_html=True)
-        st.subheader("🌍 Global Incident Distribution")
+        st.markdown("""
+        <div class="panel"><div class="panel-header">
+            <div class="section-title"><span class="dot live"></span> Live Threat Map</div>
+            <div class="panel-tag">REAL-TIME</div>
+        </div></div>""", unsafe_allow_html=True)
+
         if 'country_name' in df.columns:
-            country_counts = df['country_name'].value_counts().reset_index()
-            country_counts.columns = ['country_name', 'incident_count']
-            
+            cc = df['country_name'].value_counts().reset_index()
+            cc.columns = ['country_name', 'incident_count']
+
             fig_map = px.choropleth(
-                country_counts,
-                locations="country_name",
-                locationmode="country names",
-                color="incident_count",
-                hover_name="country_name",
-                color_continuous_scale=px.colors.sequential.Plasma,
-                title="Total Attacks per Region",
-                template=t['plotly_template']
+                cc, locations="country_name", locationmode="country names",
+                color="incident_count", hover_name="country_name",
+                color_continuous_scale=[[0,"#0a0e17"],[0.2,"#1a1a3e"],[0.5,"#6b2020"],[0.8,"#c0392b"],[1,"#ff4757"]],
             )
             fig_map.update_layout(
-                geo=dict(showframe=False, showcoastlines=True, projection_type='equirectangular', bgcolor=t['geo_bg']),
-                margin=dict(l=0, r=0, t=40, b=0),
-                plot_bgcolor=t['plotly_bg'],
-                paper_bgcolor=t['plotly_paper'],
-                coloraxis_colorbar=dict(title="Incidents")
+                **PLOTLY_LAYOUT,
+                geo=dict(showframe=False, showcoastlines=True, coastlinecolor="#1e293b",
+                         projection_type='natural earth', bgcolor='rgba(0,0,0,0)',
+                         landcolor="#111827", oceancolor="#080c14", showocean=True, showlakes=False,
+                         countrycolor="#1e293b"),
+                margin=dict(l=0,r=0,t=0,b=0),
+                coloraxis_colorbar=dict(title="Incidents", len=0.5, y=0.5),
+                height=420,
             )
+
+            # Pulsing red dots
+            lats, lons, texts, sizes = [], [], [], []
+            for _, row in cc.iterrows():
+                name, count = row['country_name'], row['incident_count']
+                if name in COUNTRY_COORDS:
+                    lat, lon = COUNTRY_COORDS[name]
+                    lats.append(lat); lons.append(lon)
+                    texts.append(f"{name}: {count}")
+                    sizes.append(min(max(count * 1.5, 6), 35))
+
+            # Outer glow
+            fig_map.add_trace(go.Scattergeo(
+                lat=lats, lon=lons, mode='markers',
+                marker=dict(size=[s*2.2 for s in sizes], color='rgba(255,71,87,0.08)', line=dict(width=0)),
+                hoverinfo='skip', showlegend=False))
+            # Mid glow
+            fig_map.add_trace(go.Scattergeo(
+                lat=lats, lon=lons, mode='markers',
+                marker=dict(size=[s*1.4 for s in sizes], color='rgba(255,71,87,0.18)', line=dict(width=0)),
+                hoverinfo='skip', showlegend=False))
+            # Core dot
+            fig_map.add_trace(go.Scattergeo(
+                lat=lats, lon=lons, mode='markers+text',
+                marker=dict(size=sizes, color='#ff4757', opacity=0.9,
+                            line=dict(width=1, color='rgba(255,71,87,0.5)')),
+                text=texts, textposition="top center",
+                textfont=dict(size=9, color="#ff6b81", family="JetBrains Mono"),
+                hoverinfo='text', showlegend=False))
+
             st.plotly_chart(fig_map, use_container_width=True)
-        else:
-            st.info("Country data not available in the dataset.")
-        st.markdown('</div>', unsafe_allow_html=True)
-            
+
+            # CSS pulse for plotly markers
+            st.markdown("""<style>
+            @keyframes pulse-map { 0%,100%{opacity:0.9} 50%{opacity:0.35} }
+            .js-plotly-plot .scattergeo .point { animation: pulse-map 2s ease-in-out infinite; }
+            </style>""", unsafe_allow_html=True)
+
     with col_scatter:
-        st.markdown('<div class="chart-box">', unsafe_allow_html=True)
-        st.subheader("💸 Revenue vs Financial Loss")
+        st.markdown("""
+        <div class="panel"><div class="panel-header">
+            <div class="section-title">💸 Revenue vs Loss</div>
+            <div class="panel-tag">CORRELATION</div>
+        </div></div>""", unsafe_allow_html=True)
+
         if 'company_revenue_usd' in df.columns and 'total_loss_usd' in df.columns:
-            df_chart = df[df['company_revenue_usd'] > 0]
-            
-            fig_scatter = px.scatter(
-                df_chart,
-                x='company_revenue_usd',
-                y='total_loss_usd',
+            dfc = df[df['company_revenue_usd'] > 0].copy()
+            fig_sc = px.scatter(
+                dfc, x='company_revenue_usd', y='total_loss_usd',
                 color='attack_vector_primary' if 'attack_vector_primary' in df.columns else None,
                 hover_name='company_name' if 'company_name' in df.columns else None,
                 size='data_compromised_records' if 'data_compromised_records' in df.columns else None,
                 log_x=True, log_y=True,
-                title="Impact Relation (Log Scale)",
-                template=t['plotly_template'],
-                labels={'company_revenue_usd': 'Company Revenue (USD)', 'total_loss_usd': 'Total Loss (USD)'},
-                color_discrete_sequence=px.colors.qualitative.Set3
+                labels={'company_revenue_usd':'Revenue (USD)','total_loss_usd':'Loss (USD)'},
+                color_discrete_sequence=["#00d4ff","#d4af37","#ff4757","#a855f7","#22d3ee","#f59e0b","#ec4899","#10b981"],
             )
-            fig_scatter.update_layout(
-                plot_bgcolor=t['plotly_bg'],
-                paper_bgcolor=t['plotly_paper'],
-                margin=dict(l=20, r=20, t=40, b=20),
-                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
-            )
-            st.plotly_chart(fig_scatter, use_container_width=True)
-        else:
-            st.info("Revenue or Loss data not available.")
-        st.markdown('</div>', unsafe_allow_html=True)
+            fig_sc.update_layout(**PLOTLY_LAYOUT, height=420,
+                legend=dict(orientation="h",yanchor="bottom",y=-0.25,xanchor="center",x=0.5,
+                            font=dict(size=10,color="#64748b"),bgcolor="rgba(0,0,0,0)"))
+            fig_sc.update_traces(marker=dict(line=dict(width=0.5,color='rgba(255,255,255,0.1)')))
+            st.plotly_chart(fig_sc, use_container_width=True)
 
-    # 3. Bar Charts Row
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_bar1, col_bar2 = st.columns(2)
-    
-    with col_bar1:
-        st.markdown('<div class="chart-box">', unsafe_allow_html=True)
-        st.subheader("🏢 Top Target Companies")
+    # ═══ ROW 2: BAR + DONUT + STATS ═══
+    col_bar, col_donut, col_stats = st.columns([1.2, 1, 0.8])
+
+    with col_bar:
+        st.markdown("""
+        <div class="panel"><div class="panel-header">
+            <div class="section-title">🏢 Top Targets</div>
+            <div class="panel-tag">BY INCIDENTS</div>
+        </div></div>""", unsafe_allow_html=True)
+
         if 'company_name' in df.columns:
-            top_companies = df.groupby('company_name').agg({'total_loss_usd': 'sum', 'incident_id': 'count'}).reset_index()
-            top_companies = top_companies.sort_values('incident_id', ascending=False).head(10)
-            
-            fig_bar1 = px.bar(
-                top_companies,
-                x='incident_id',
-                y='company_name',
-                orientation='h',
-                color='total_loss_usd',
-                color_continuous_scale=px.colors.sequential.Sunsetdark,
-                title="Companies by Number of Incidents",
-                template=t['plotly_template'],
-                labels={'incident_id': 'Incident Count', 'company_name': '', 'total_loss_usd': 'Total Loss'}
-            )
-            fig_bar1.update_layout(
-                yaxis={'categoryorder':'total ascending'},
-                plot_bgcolor=t['plotly_bg'],
-                paper_bgcolor=t['plotly_paper'],
-                margin=dict(l=10, r=10, t=40, b=10)
-            )
-            st.plotly_chart(fig_bar1, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with col_bar2:
-        st.markdown('<div class="chart-box">', unsafe_allow_html=True)
-        st.subheader("🦠 Primary Attack Vectors")
-        if 'attack_vector_primary' in df.columns:
-            attack_counts = df['attack_vector_primary'].value_counts().reset_index()
-            attack_counts.columns = ['attack_vector_primary', 'count']
-            
-            fig_pie = px.pie(
-                attack_counts,
-                names='attack_vector_primary',
-                values='count',
-                hole=0.5,
-                title="Incidents by Entry Method",
-                template=t['plotly_template'],
-                color_discrete_sequence=px.colors.qualitative.Pastel
-            )
-            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-            fig_pie.update_layout(
-                plot_bgcolor=t['plotly_bg'],
-                paper_bgcolor=t['plotly_paper'],
-                showlegend=False,
-                margin=dict(l=10, r=10, t=40, b=10)
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            top = df.groupby('company_name').agg(incidents=('company_name','count'),loss=('total_loss_usd','sum')).reset_index()
+            top = top.sort_values('incidents', ascending=False).head(10)
+            fig_b = px.bar(top, x='incidents', y='company_name', orientation='h',
+                           color='loss', color_continuous_scale=["#1a1a2e","#d4af37","#f5d76e"],
+                           labels={'incidents':'Incidents','company_name':'','loss':'Total Loss'})
+            fig_b.update_layout(**PLOTLY_LAYOUT, yaxis=dict(categoryorder='total ascending'), height=380)
+            st.plotly_chart(fig_b, use_container_width=True)
 
-    st.markdown("---")
-    
-    # Raw Data Expander
-    with st.expander("🔍 Filtered Data Details"):
-        st.dataframe(df, use_container_width=True)
+    with col_donut:
+        st.markdown("""
+        <div class="panel"><div class="panel-header">
+            <div class="section-title">🦠 Attack Vectors</div>
+            <div class="panel-tag">DISTRIBUTION</div>
+        </div></div>""", unsafe_allow_html=True)
+
+        if 'attack_vector_primary' in df.columns:
+            atk = df['attack_vector_primary'].value_counts().reset_index()
+            atk.columns = ['vector','count']
+            fig_d = px.pie(atk, names='vector', values='count', hole=0.6,
+                           color_discrete_sequence=["#00d4ff","#d4af37","#ff4757","#a855f7","#10b981","#f59e0b","#ec4899","#6366f1"])
+            fig_d.update_traces(textposition='inside', textinfo='percent',
+                                textfont=dict(size=11, family="Outfit"))
+            fig_d.update_layout(**PLOTLY_LAYOUT, showlegend=True, height=380,
+                legend=dict(font=dict(size=9,color="#94a3b8"), bgcolor="rgba(0,0,0,0)",
+                            orientation="h",yanchor="bottom",y=-0.3,xanchor="center",x=0.5))
+            st.plotly_chart(fig_d, use_container_width=True)
+
+    with col_stats:
+        ransom = df['ransom_demanded_usd'].sum() if 'ransom_demanded_usd' in df.columns else 0
+        st.markdown(f"""
+        <div class="stat-grid">
+            <div class="stat-card cyan-bg">
+                <div class="stat-card-icon">🌍</div>
+                <div class="stat-card-value">{unique_countries}</div>
+                <div class="stat-card-label">Countries</div>
+                <div class="stat-card-sub">Affected regions</div>
+            </div>
+            <div class="stat-card rose-bg">
+                <div class="stat-card-icon">💀</div>
+                <div class="stat-card-value">{format_currency(ransom)}</div>
+                <div class="stat-card-label">Ransoms</div>
+                <div class="stat-card-sub">Total demanded</div>
+            </div>
+            <div class="stat-card violet-bg">
+                <div class="stat-card-icon">📈</div>
+                <div class="stat-card-value">{format_number(total_records)}</div>
+                <div class="stat-card-label">Records</div>
+                <div class="stat-card-sub">Data compromised</div>
+            </div>
+            <div class="stat-card amber-bg">
+                <div class="stat-card-icon">⚡</div>
+                <div class="stat-card-value">{avg_days:.0f}d</div>
+                <div class="stat-card-label">Response</div>
+                <div class="stat-card-sub">Avg disclosure</div>
+            </div>
+        </div>""", unsafe_allow_html=True)
+
+    # Raw Data
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("🔍 Filtered Data — Raw View"):
+        st.dataframe(df, use_container_width=True, height=400)
+
+    st.markdown("""
+    <div style="text-align:center; padding:30px 0 10px; border-top:1px solid rgba(255,255,255,0.03); margin-top:30px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:#334155;">
+            CYBER INCIDENTS CONTROL PANEL • GOLD LAYER • DATABRICKS
+        </span>
+    </div>""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
