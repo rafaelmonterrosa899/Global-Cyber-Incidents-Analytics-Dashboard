@@ -332,6 +332,152 @@ button[data-testid="baseButton-headerNoPadding"]:hover {{
     font-weight: 600 !important;
     color: {T['expander_color']} !important;
 }}
+
+/* ═══════════════════════════════════════════ */
+/* RESPONSIVE — Tablet (≤1024px)              */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 1024px) {{
+    .kpi-row {{
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }}
+    .kpi-value {{
+        font-size: 1.6rem;
+    }}
+    .kpi-label {{
+        font-size: 0.72rem;
+    }}
+    .top-bar {{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }}
+    .top-bar-left h1 {{
+        font-size: 1.4rem;
+    }}
+    .breadcrumb {{
+        display: none;
+    }}
+}}
+
+/* ═══════════════════════════════════════════ */
+/* RESPONSIVE — Mobile (≤768px)               */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 768px) {{
+    .block-container {{
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+        padding-top: 1rem !important;
+    }}
+
+    /* KPI cards stack to 1 column */
+    .kpi-row {{
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }}
+    .kpi-card {{
+        padding: 16px 14px;
+        border-radius: 14px;
+    }}
+    .kpi-icon {{
+        width: 36px; height: 36px;
+        font-size: 1rem;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }}
+    .kpi-value {{
+        font-size: 1.4rem;
+    }}
+    .kpi-label {{
+        font-size: 0.68rem;
+        letter-spacing: 1px;
+    }}
+    .kpi-sub {{
+        font-size: 0.62rem;
+    }}
+
+    /* Top bar compact */
+    .top-bar {{
+        padding: 4px 0 12px 0;
+        margin-bottom: 14px;
+    }}
+    .top-bar-left h1 {{
+        font-size: 1.25rem;
+    }}
+    .top-bar-left p {{
+        font-size: 0.65rem;
+        letter-spacing: 1.5px;
+    }}
+
+    /* Panels */
+    .panel {{
+        padding: 14px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }}
+    .panel-header {{
+        margin-bottom: 8px;
+    }}
+    .section-title {{
+        font-size: 0.92rem;
+    }}
+    .panel-tag {{
+        font-size: 0.58rem;
+        padding: 2px 8px;
+    }}
+
+    /* Streamlit columns override — force full width on mobile */
+    [data-testid="stHorizontalBlock"] {{
+        flex-direction: column !important;
+    }}
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }}
+}}
+
+/* ═══════════════════════════════════════════ */
+/* RESPONSIVE — Small phone (≤480px)          */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 480px) {{
+    .kpi-row {{
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }}
+    .kpi-card {{
+        padding: 12px 10px;
+    }}
+    .kpi-icon {{
+        width: 30px; height: 30px;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }}
+    .kpi-value {{
+        font-size: 1.2rem;
+    }}
+    .kpi-label {{
+        font-size: 0.6rem;
+        letter-spacing: 0.8px;
+    }}
+    .kpi-sub {{
+        font-size: 0.55rem;
+    }}
+    .top-bar-left h1 {{
+        font-size: 1.1rem;
+    }}
+    .top-bar-left p {{
+        font-size: 0.6rem;
+    }}
+    .section-title {{
+        font-size: 0.85rem;
+    }}
+    .panel {{
+        padding: 10px;
+        border-radius: 10px;
+    }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
