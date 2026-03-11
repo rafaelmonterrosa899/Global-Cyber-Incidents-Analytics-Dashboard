@@ -8,36 +8,92 @@ import time
 # Configurations
 st.set_page_config(page_title="Cyber Incidents Dashboard", page_icon="🛡️", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS for modern aesthetic
-st.markdown("""
+# --- Theme Toggle ---
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'dark'
+
+# Theme definitions
+THEMES = {
+    'dark': {
+        'bg': '#0e1117',
+        'card_bg': 'rgba(30, 35, 45, 0.7)',
+        'card_border': 'rgba(255, 255, 255, 0.05)',
+        'card_hover_border': 'rgba(79, 172, 254, 0.3)',
+        'chart_bg': 'rgba(22, 27, 34, 0.5)',
+        'chart_border': 'rgba(255, 255, 255, 0.05)',
+        'header_color': '#ffffff',
+        'sub_header': '#8b9bb4',
+        'kpi_title': '#a0aec0',
+        'kpi_value': '#ffffff',
+        'kpi_value_gradient': 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)',
+        'section_title': '#ffffff',
+        'shadow': 'rgba(0, 0, 0, 0.2)',
+        'shadow_hover': 'rgba(0, 0, 0, 0.3)',
+        'plotly_template': 'plotly_dark',
+        'plotly_bg': 'rgba(0,0,0,0)',
+        'plotly_paper': 'rgba(0,0,0,0)',
+        'geo_bg': 'rgba(0,0,0,0)',
+    },
+    'light': {
+        'bg': '#f8f9fc',
+        'card_bg': 'rgba(255, 255, 255, 0.95)',
+        'card_border': 'rgba(0, 0, 0, 0.08)',
+        'card_hover_border': 'rgba(37, 99, 235, 0.4)',
+        'chart_bg': 'rgba(255, 255, 255, 0.9)',
+        'chart_border': 'rgba(0, 0, 0, 0.06)',
+        'header_color': '#1a202c',
+        'sub_header': '#64748b',
+        'kpi_title': '#64748b',
+        'kpi_value': '#1e293b',
+        'kpi_value_gradient': 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+        'section_title': '#1e293b',
+        'shadow': 'rgba(0, 0, 0, 0.06)',
+        'shadow_hover': 'rgba(0, 0, 0, 0.12)',
+        'plotly_template': 'plotly_white',
+        'plotly_bg': 'rgba(0,0,0,0)',
+        'plotly_paper': 'rgba(0,0,0,0)',
+        'geo_bg': 'rgba(0,0,0,0)',
+    }
+}
+
+t = THEMES[st.session_state.theme]
+
+# Custom CSS — dynamic based on theme
+st.markdown(f"""
 <style>
     /* Global Styles */
-    .stApp {
-        background-color: #0e1117;
-    }
+    .stApp {{
+        background-color: {t['bg']};
+    }}
     
     /* Headers */
-    .dashboard-header {
-        background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .dashboard-header {{
+        color: {t['header_color']};
         font-weight: 900;
         font-size: 2.8rem;
         margin-bottom: 5px;
-    }
-    .sub-header {
-        color: #8b9bb4;
+    }}
+    .sub-header {{
+        color: {t['sub_header']};
         font-size: 1.1rem;
         margin-bottom: 30px;
-    }
+    }}
+
+    /* Section Titles — white & bold */
+    .stSubheader, h2, h3,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {{
+        color: {t['section_title']} !important;
+        font-weight: 700 !important;
+    }}
 
     /* KPI Cards */
-    .kpi-container {
-        background: rgba(30, 35, 45, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    .kpi-container {{
+        background: {t['card_bg']};
+        border: 1px solid {t['card_border']};
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 30px {t['shadow']};
         backdrop-filter: blur(10px);
         text-align: center;
         transition: all 0.3s ease;
@@ -46,44 +102,43 @@ st.markdown("""
         flex-direction: column;
         justify-content: center;
         align-items: center;
-    }
-    .kpi-container:hover {
+    }}
+    .kpi-container:hover {{
         transform: translateY(-5px);
-        border-color: rgba(79, 172, 254, 0.3);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-    }
-    .kpi-title {
-        color: #a0aec0;
+        border-color: {t['card_hover_border']};
+        box-shadow: 0 15px 35px {t['shadow_hover']};
+    }}
+    .kpi-title {{
+        color: {t['kpi_title']};
         font-size: 1rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 12px;
-    }
-    .kpi-value {
-        color: #ffffff;
+    }}
+    .kpi-value {{
         font-size: 2.5rem;
         font-weight: 800;
         margin: 0;
-        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+        background: {t['kpi_value_gradient']};
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-    }
-    .kpi-subtitle {
+    }}
+    .kpi-subtitle {{
         color: #ef4444;
         font-size: 0.9rem;
         margin-top: 8px;
         font-weight: 500;
-    }
+    }}
     
     /* Charts Container */
-    .chart-box {
-        background: rgba(22, 27, 34, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    .chart-box {{
+        background: {t['chart_bg']};
+        border: 1px solid {t['chart_border']};
         border-radius: 12px;
         padding: 15px;
         margin-top: 20px;
-    }
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,6 +201,12 @@ def main():
         
     # --- Sidebar Filters ---
     st.sidebar.markdown("### ⚙️ Dashboard Controls")
+    
+    # Theme Toggle
+    theme_label = "🌙 Dark Mode" if st.session_state.theme == 'light' else "☀️ Light Mode"
+    if st.sidebar.button(theme_label, use_container_width=True):
+        st.session_state.theme = 'light' if st.session_state.theme == 'dark' else 'dark'
+        st.rerun()
     
     if st.sidebar.button("🔄 Refresh Dataset", use_container_width=True):
         st.cache_data.clear()
@@ -256,13 +317,13 @@ def main():
                 hover_name="country_name",
                 color_continuous_scale=px.colors.sequential.Plasma,
                 title="Total Attacks per Region",
-                template="plotly_dark"
+                template=t['plotly_template']
             )
             fig_map.update_layout(
-                geo=dict(showframe=False, showcoastlines=True, projection_type='equirectangular', bgcolor='rgba(0,0,0,0)'),
+                geo=dict(showframe=False, showcoastlines=True, projection_type='equirectangular', bgcolor=t['geo_bg']),
                 margin=dict(l=0, r=0, t=40, b=0),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=t['plotly_bg'],
+                paper_bgcolor=t['plotly_paper'],
                 coloraxis_colorbar=dict(title="Incidents")
             )
             st.plotly_chart(fig_map, use_container_width=True)
@@ -285,13 +346,13 @@ def main():
                 size='data_compromised_records' if 'data_compromised_records' in df.columns else None,
                 log_x=True, log_y=True,
                 title="Impact Relation (Log Scale)",
-                template="plotly_dark",
+                template=t['plotly_template'],
                 labels={'company_revenue_usd': 'Company Revenue (USD)', 'total_loss_usd': 'Total Loss (USD)'},
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig_scatter.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=t['plotly_bg'],
+                paper_bgcolor=t['plotly_paper'],
                 margin=dict(l=20, r=20, t=40, b=20),
                 legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
             )
@@ -319,13 +380,13 @@ def main():
                 color='total_loss_usd',
                 color_continuous_scale=px.colors.sequential.Sunsetdark,
                 title="Companies by Number of Incidents",
-                template="plotly_dark",
+                template=t['plotly_template'],
                 labels={'incident_id': 'Incident Count', 'company_name': '', 'total_loss_usd': 'Total Loss'}
             )
             fig_bar1.update_layout(
                 yaxis={'categoryorder':'total ascending'},
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=t['plotly_bg'],
+                paper_bgcolor=t['plotly_paper'],
                 margin=dict(l=10, r=10, t=40, b=10)
             )
             st.plotly_chart(fig_bar1, use_container_width=True)
@@ -344,13 +405,13 @@ def main():
                 values='count',
                 hole=0.5,
                 title="Incidents by Entry Method",
-                template="plotly_dark",
+                template=t['plotly_template'],
                 color_discrete_sequence=px.colors.qualitative.Pastel
             )
             fig_pie.update_traces(textposition='inside', textinfo='percent+label')
             fig_pie.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor=t['plotly_bg'],
+                paper_bgcolor=t['plotly_paper'],
                 showlegend=False,
                 margin=dict(l=10, r=10, t=40, b=10)
             )
