@@ -43,7 +43,7 @@ if is_dark:
         "surface2": "#0f1623",
         "surface3": "#0d1220",
         "border": "rgba(255,255,255,0.04)",
-        "border_hover": "rgba(212,175,55,0.2)",
+        "border_hover": "rgba(255,255,255,0.12)",
         "text_primary": "#f1f5f9",
         "text_secondary": "#cbd5e1",
         "text_muted": "#64748b",
@@ -52,10 +52,11 @@ if is_dark:
         "kpi_label": "#94a3b8",
         "kpi_sub": "#64748b",
         "sidebar_bg": "linear-gradient(180deg, #0d1220 0%, #0a0e17 100%)",
-        "sidebar_border": "rgba(212, 175, 55, 0.15)",
-        "sidebar_label": "#8a93a6",
-        "gold": "#d4af37",
-        "gold_light": "#f5d76e",
+        "sidebar_border": "rgba(255,255,255,0.08)",
+        "sidebar_label": "#94a3b8",
+        "sidebar_heading": "#e2e8f0",
+        "gold": "#e2e8f0",
+        "gold_light": "#ffffff",
         "land": "#111827",
         "ocean": "#080c14",
         "coast": "#1e293b",
@@ -63,10 +64,10 @@ if is_dark:
         "plotly_font": "#94a3b8",
         "scrollbar_track": "#0a0e17",
         "scrollbar_thumb": "#1e293b",
-        "footer_color": "#334155",
-        "panel_tag_bg": "rgba(212,175,55,0.08)",
-        "panel_tag_border": "rgba(212,175,55,0.15)",
-        "expander_color": "#d4af37",
+        "footer_color": "#475569",
+        "panel_tag_bg": "rgba(255,255,255,0.06)",
+        "panel_tag_border": "rgba(255,255,255,0.12)",
+        "expander_color": "#e2e8f0",
     }
 else:
     T = {
@@ -84,8 +85,9 @@ else:
         "kpi_label": "#475569",
         "kpi_sub": "#94a3b8",
         "sidebar_bg": "linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%)",
-        "sidebar_border": "rgba(212,175,55,0.25)",
+        "sidebar_border": "rgba(0,0,0,0.08)",
         "sidebar_label": "#475569",
+        "sidebar_heading": "#0f172a",
         "gold": "#b8941f",
         "gold_light": "#d4af37",
         "land": "#e2e8f0",
@@ -128,13 +130,33 @@ section[data-testid="stSidebar"] {{
 }}
 section[data-testid="stSidebar"] .stMarkdown h3,
 section[data-testid="stSidebar"] .stMarkdown h2 {{
-    color: {T['gold']} !important;
+    color: {T['sidebar_heading']} !important;
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
 }}
 section[data-testid="stSidebar"] label {{
     color: {T['sidebar_label']} !important;
     font-family: 'Outfit', sans-serif;
+}}
+
+/* Sidebar collapse/expand button — ensure visible in dark mode */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="baseButton-headerNoPadding"] {{
+    color: {T['text_primary']} !important;
+    background: {T['surface']} !important;
+    border: 1px solid {T['border']} !important;
+    border-radius: 8px !important;
+    opacity: 1 !important;
+}}
+button[data-testid="stSidebarCollapseButton"] svg,
+button[data-testid="baseButton-headerNoPadding"] svg {{
+    fill: {T['text_primary']} !important;
+    stroke: {T['text_primary']} !important;
+}}
+button[data-testid="stSidebarCollapseButton"]:hover,
+button[data-testid="baseButton-headerNoPadding"]:hover {{
+    background: {T['surface2']} !important;
+    border-color: {T['text_muted']} !important;
 }}
 
 /* Top Bar */
