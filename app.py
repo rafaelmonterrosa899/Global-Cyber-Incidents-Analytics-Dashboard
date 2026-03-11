@@ -590,27 +590,49 @@ def main():
 
         if 'company_revenue_usd' in df.columns and 'total_loss_usd' in df.columns:
             dfc = df[df['company_revenue_usd'] > 0].copy()
+
+            # Stronger palette for light mode, vibrant for dark
+            if is_dark:
+                scatter_colors = ["#00d4ff","#d4af37","#ff4757","#a855f7","#22d3ee","#f59e0b","#ec4899","#10b981"]
+            else:
+                scatter_colors = ["#0284c7","#b45309","#dc2626","#7c3aed","#0891b2","#d97706","#be185d","#059669"]
+
             fig_sc = px.scatter(
                 dfc, x='company_revenue_usd', y='total_loss_usd',
                 color='attack_vector_primary' if 'attack_vector_primary' in df.columns else None,
                 hover_name='company_name' if 'company_name' in df.columns else None,
                 size='data_compromised_records' if 'data_compromised_records' in df.columns else None,
+                size_max=45,
                 log_x=True, log_y=True,
                 labels={'company_revenue_usd': 'Revenue (USD)', 'total_loss_usd': 'Loss (USD)'},
-                color_discrete_sequence=["#00d4ff","#d4af37","#ff4757","#a855f7","#22d3ee","#f59e0b","#ec4899","#10b981"],
+                color_discrete_sequence=scatter_colors,
             )
             fig_sc.update_layout(
                 **get_plotly_base(),
-                margin=dict(l=20, r=20, t=10, b=20),
-                height=420,
+                margin=dict(l=20, r=20, t=10, b=60),
+                height=440,
                 legend=dict(
-                    orientation="h", yanchor="bottom", y=-0.25,
+                    title=None,
+                    orientation="h", yanchor="top", y=-0.15,
                     xanchor="center", x=0.5,
                     font=dict(size=10, color=T['plotly_font']),
                     bgcolor="rgba(0,0,0,0)",
                 ),
+                xaxis=dict(
+                    gridcolor="rgba(128,128,128,0.1)" if is_dark else "rgba(0,0,0,0.06)",
+                    title_font=dict(size=12),
+                ),
+                yaxis=dict(
+                    gridcolor="rgba(128,128,128,0.1)" if is_dark else "rgba(0,0,0,0.06)",
+                    title_font=dict(size=12),
+                ),
             )
-            fig_sc.update_traces(marker=dict(line=dict(width=0.5, color='rgba(128,128,128,0.2)')))
+            fig_sc.update_traces(
+                marker=dict(
+                    opacity=0.85,
+                    line=dict(width=1.5, color='rgba(255,255,255,0.6)' if is_dark else 'rgba(0,0,0,0.15)'),
+                )
+            )
             st.plotly_chart(fig_sc, use_container_width=True)
 
     # ═══ ROW 2: BAR + DONUT ═══
