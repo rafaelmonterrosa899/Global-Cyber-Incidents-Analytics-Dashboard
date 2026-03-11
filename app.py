@@ -23,13 +23,8 @@ if "theme" not in st.session_state:
 
 # Sidebar theme toggle
 st.sidebar.markdown("### 🎨 Appearance")
-theme_choice = st.sidebar.radio(
-    "Theme",
-    ["Dark Mode", "Light Mode"],
-    index=0 if st.session_state.theme == "dark" else 1,
-    horizontal=True,
-)
-st.session_state.theme = "dark" if theme_choice == "Dark Mode" else "light"
+light_on = st.sidebar.toggle("☀️ Light Mode", value=st.session_state.theme == "light")
+st.session_state.theme = "light" if light_on else "dark"
 is_dark = st.session_state.theme == "dark"
 
 # ─────────────────────────────────────────────
@@ -281,51 +276,6 @@ section[data-testid="stSidebar"] label {{
     padding: 3px 10px;
     border-radius: 20px;
     border: 1px solid {T['panel_tag_border']};
-}}
-
-/* Colored Stat Cards */
-.stat-grid {{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 16px;
-}}
-.stat-card {{
-    border-radius: 14px;
-    padding: 18px 16px;
-    position: relative;
-    overflow: hidden;
-}}
-.stat-card.cyan-bg {{ background: linear-gradient(135deg, #0e7490, #06b6d4); }}
-.stat-card.rose-bg {{ background: linear-gradient(135deg, #be123c, #f43f5e); }}
-.stat-card.violet-bg {{ background: linear-gradient(135deg, #7c3aed, #a855f7); }}
-.stat-card.amber-bg {{ background: linear-gradient(135deg, #b45309, #f59e0b); }}
-.stat-card-value {{
-    font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 1.6rem;
-    color: #fff;
-    margin: 0;
-}}
-.stat-card-label {{
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.85);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    margin-top: 2px;
-}}
-.stat-card-sub {{
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.6);
-    margin-top: 6px;
-    font-family: 'JetBrains Mono', monospace;
-}}
-.stat-card-icon {{
-    position: absolute;
-    top: 14px; right: 16px;
-    font-size: 1.4rem;
-    opacity: 0.3;
 }}
 
 /* Animations */
@@ -657,8 +607,8 @@ def main():
             fig_sc.update_traces(marker=dict(line=dict(width=0.5, color='rgba(128,128,128,0.2)')))
             st.plotly_chart(fig_sc, use_container_width=True)
 
-    # ═══ ROW 2: BAR + DONUT + STATS ═══
-    col_bar, col_donut, col_stats = st.columns([1.2, 1, 0.8])
+    # ═══ ROW 2: BAR + DONUT ═══
+    col_bar, col_donut = st.columns(2)
 
     with col_bar:
         st.markdown("""
@@ -717,36 +667,6 @@ def main():
                 ),
             )
             st.plotly_chart(fig_d, use_container_width=True)
-
-    with col_stats:
-        ransom = df['ransom_demanded_usd'].sum() if 'ransom_demanded_usd' in df.columns else 0
-        st.markdown(f"""
-        <div class="stat-grid">
-            <div class="stat-card cyan-bg">
-                <div class="stat-card-icon">🌍</div>
-                <div class="stat-card-value">{unique_countries}</div>
-                <div class="stat-card-label">Countries</div>
-                <div class="stat-card-sub">Affected regions</div>
-            </div>
-            <div class="stat-card rose-bg">
-                <div class="stat-card-icon">💀</div>
-                <div class="stat-card-value">{format_currency(ransom)}</div>
-                <div class="stat-card-label">Ransoms</div>
-                <div class="stat-card-sub">Total demanded</div>
-            </div>
-            <div class="stat-card violet-bg">
-                <div class="stat-card-icon">📈</div>
-                <div class="stat-card-value">{format_number(total_records)}</div>
-                <div class="stat-card-label">Records</div>
-                <div class="stat-card-sub">Data compromised</div>
-            </div>
-            <div class="stat-card amber-bg">
-                <div class="stat-card-icon">⚡</div>
-                <div class="stat-card-value">{avg_days:.0f}d</div>
-                <div class="stat-card-label">Response</div>
-                <div class="stat-card-sub">Avg disclosure</div>
-            </div>
-        </div>""", unsafe_allow_html=True)
 
     # Raw Data
     st.markdown("<br>", unsafe_allow_html=True)
