@@ -509,11 +509,15 @@ def main():
     col_map, col_scatter = st.columns([1.3, 1])
 
     with col_map:
-        st.markdown("""
+        st.markdown(f"""
         <div class="panel"><div class="panel-header">
             <div class="section-title"><span class="dot live"></span> Live Threat Map</div>
             <div class="panel-tag">REAL-TIME</div>
-        </div></div>""", unsafe_allow_html=True)
+        </div>
+        <p style="font-size:0.8rem; color:{T['text_muted']}; margin:0 0 8px 0; font-family:'Outfit',sans-serif;">
+            Geographic distribution of cyber incidents. Darker regions and larger pulsing dots indicate higher concentration of attacks.
+        </p>
+        </div>""", unsafe_allow_html=True)
 
         if 'country_name' in df.columns:
             cc = df['country_name'].value_counts().reset_index()
@@ -597,21 +601,23 @@ def main():
             # Filter out rows with zero values that create invisible dots
             dfc = df[(df['company_revenue_usd'] > 0) & (df['total_loss_usd'] > 0)].copy()
 
-            # High-contrast palettes — no white, no light colors
-            if is_dark:
-                scatter_colors = ["#00d4ff","#d4af37","#ff4757","#a855f7","#22d3ee","#f59e0b","#ec4899","#10b981"]
-            else:
-                scatter_colors = ["#0369a1","#c2410c","#dc2626","#7c3aed","#0e7490","#a16207","#be185d","#047857"]
+            # Build explicit color map — every vector gets a guaranteed visible color
+            dark_palette = ["#00d4ff","#f59e0b","#ff4757","#a855f7","#10b981","#ec4899","#6366f1","#f97316","#14b8a6","#e879f9"]
+            light_palette = ["#0369a1","#c2410c","#b91c1c","#7c3aed","#047857","#be185d","#4338ca","#ea580c","#0f766e","#a21caf"]
+
+            palette = dark_palette if is_dark else light_palette
+            vectors_in_data = dfc['attack_vector_primary'].unique().tolist() if 'attack_vector_primary' in dfc.columns else []
+            color_map = {v: palette[i % len(palette)] for i, v in enumerate(sorted(vectors_in_data))}
 
             fig_sc = px.scatter(
                 dfc, x='company_revenue_usd', y='total_loss_usd',
-                color='attack_vector_primary' if 'attack_vector_primary' in df.columns else None,
-                hover_name='company_name' if 'company_name' in df.columns else None,
-                size='data_compromised_records' if 'data_compromised_records' in df.columns else None,
+                color='attack_vector_primary' if 'attack_vector_primary' in dfc.columns else None,
+                hover_name='company_name' if 'company_name' in dfc.columns else None,
+                size='data_compromised_records' if 'data_compromised_records' in dfc.columns else None,
                 size_max=45,
                 log_x=True, log_y=True,
                 labels={'company_revenue_usd': 'Revenue (USD)', 'total_loss_usd': 'Loss (USD)'},
-                color_discrete_sequence=scatter_colors,
+                color_discrete_map=color_map if color_map else None,
             )
             fig_sc.update_layout(
                 **get_plotly_base(),
@@ -645,11 +651,15 @@ def main():
     col_bar, col_donut = st.columns(2)
 
     with col_bar:
-        st.markdown("""
+        st.markdown(f"""
         <div class="panel"><div class="panel-header">
             <div class="section-title">🏢 Top Targets</div>
             <div class="panel-tag">BY INCIDENTS</div>
-        </div></div>""", unsafe_allow_html=True)
+        </div>
+        <p style="font-size:0.8rem; color:{T['text_muted']}; margin:0 0 8px 0; font-family:'Outfit',sans-serif;">
+            Top 10 most targeted companies ranked by number of incidents. Color intensity reflects total financial loss.
+        </p>
+        </div>""", unsafe_allow_html=True)
 
         if 'company_name' in df.columns:
             top = df.groupby('company_name').agg(
@@ -672,11 +682,15 @@ def main():
             st.plotly_chart(fig_b, use_container_width=True)
 
     with col_donut:
-        st.markdown("""
+        st.markdown(f"""
         <div class="panel"><div class="panel-header">
             <div class="section-title">🦠 Attack Vectors</div>
             <div class="panel-tag">DISTRIBUTION</div>
-        </div></div>""", unsafe_allow_html=True)
+        </div>
+        <p style="font-size:0.8rem; color:{T['text_muted']}; margin:0 0 8px 0; font-family:'Outfit',sans-serif;">
+            Breakdown of primary entry methods used in attacks. Hover for exact counts per vector type.
+        </p>
+        </div>""", unsafe_allow_html=True)
 
         if 'attack_vector_primary' in df.columns:
             atk = df['attack_vector_primary'].value_counts().reset_index()
