@@ -336,100 +336,114 @@ button[data-testid="baseButton-headerNoPadding"]:hover {{
 /* ═══════════════════════════════════════════ */
 /* RESPONSIVE — Tablet (≤1024px)              */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 1024px) {{
+@media screen and (max-width: 1024px) {{
     .kpi-row {{
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px;
     }}
     .kpi-value {{
-        font-size: 1.6rem;
+        font-size: 1.5rem !important;
     }}
     .kpi-label {{
-        font-size: 0.72rem;
+        font-size: 0.7rem !important;
     }}
     .top-bar {{
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: column !important;
+        align-items: flex-start !important;
         gap: 4px;
     }}
     .top-bar-left h1 {{
-        font-size: 1.4rem;
+        font-size: 1.4rem !important;
     }}
     .breadcrumb {{
-        display: none;
+        display: none !important;
     }}
 }}
 
 /* ═══════════════════════════════════════════ */
 /* RESPONSIVE — Mobile (≤768px)               */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 768px) {{
+@media screen and (max-width: 768px) {{
     .block-container {{
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
-        padding-top: 1rem !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        padding-top: 0.8rem !important;
     }}
 
-    /* KPI cards stack to 1 column */
+    /* KPI 2x2 grid, compact */
     .kpi-row {{
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 16px;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
     }}
     .kpi-card {{
-        padding: 16px 14px;
-        border-radius: 14px;
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
     }}
     .kpi-icon {{
-        width: 36px; height: 36px;
-        font-size: 1rem;
-        margin-bottom: 10px;
-        border-radius: 10px;
+        width: 32px !important; height: 32px !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
     }}
     .kpi-value {{
-        font-size: 1.4rem;
+        font-size: 1.3rem !important;
+        word-break: break-all !important;
     }}
     .kpi-label {{
-        font-size: 0.68rem;
-        letter-spacing: 1px;
+        font-size: 0.6rem !important;
+        letter-spacing: 0.8px !important;
     }}
+    /* Hide subtitle on mobile to save space */
     .kpi-sub {{
-        font-size: 0.62rem;
+        display: none !important;
     }}
 
-    /* Top bar compact */
+    /* Top bar */
     .top-bar {{
-        padding: 4px 0 12px 0;
-        margin-bottom: 14px;
+        padding: 4px 0 10px 0 !important;
+        margin-bottom: 10px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }}
     .top-bar-left h1 {{
-        font-size: 1.25rem;
+        font-size: 1.15rem !important;
     }}
     .top-bar-left p {{
-        font-size: 0.65rem;
-        letter-spacing: 1.5px;
+        font-size: 0.6rem !important;
+        letter-spacing: 1px !important;
+    }}
+    .breadcrumb {{
+        display: none !important;
     }}
 
     /* Panels */
     .panel {{
-        padding: 14px;
-        border-radius: 12px;
-        margin-bottom: 10px;
+        padding: 12px !important;
+        border-radius: 10px !important;
+        margin-bottom: 8px !important;
     }}
     .panel-header {{
-        margin-bottom: 8px;
+        margin-bottom: 6px !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
     }}
     .section-title {{
-        font-size: 0.92rem;
+        font-size: 0.88rem !important;
     }}
     .panel-tag {{
-        font-size: 0.58rem;
-        padding: 2px 8px;
+        font-size: 0.55rem !important;
+        padding: 2px 6px !important;
+    }}
+    /* Hide chart descriptions on mobile */
+    .panel p {{
+        display: none !important;
     }}
 
-    /* Streamlit columns override — force full width on mobile */
+    /* Streamlit columns → full width stacked */
     [data-testid="stHorizontalBlock"] {{
         flex-direction: column !important;
+        gap: 0 !important;
     }}
     [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
         width: 100% !important;
@@ -441,41 +455,37 @@ button[data-testid="baseButton-headerNoPadding"]:hover {{
 /* ═══════════════════════════════════════════ */
 /* RESPONSIVE — Small phone (≤480px)          */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 480px) {{
+@media screen and (max-width: 480px) {{
     .kpi-row {{
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
     }}
     .kpi-card {{
-        padding: 12px 10px;
+        padding: 10px 8px !important;
     }}
     .kpi-icon {{
-        width: 30px; height: 30px;
-        font-size: 0.85rem;
-        margin-bottom: 8px;
+        width: 26px !important; height: 26px !important;
+        font-size: 0.75rem !important;
+        margin-bottom: 6px !important;
     }}
     .kpi-value {{
-        font-size: 1.2rem;
+        font-size: 1.1rem !important;
     }}
     .kpi-label {{
-        font-size: 0.6rem;
-        letter-spacing: 0.8px;
-    }}
-    .kpi-sub {{
-        font-size: 0.55rem;
+        font-size: 0.55rem !important;
+        letter-spacing: 0.5px !important;
     }}
     .top-bar-left h1 {{
-        font-size: 1.1rem;
+        font-size: 1rem !important;
     }}
     .top-bar-left p {{
-        font-size: 0.6rem;
+        font-size: 0.55rem !important;
     }}
     .section-title {{
-        font-size: 0.85rem;
+        font-size: 0.8rem !important;
     }}
     .panel {{
-        padding: 10px;
-        border-radius: 10px;
+        padding: 8px !important;
     }}
 }}
 </style>
