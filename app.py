@@ -582,20 +582,26 @@ def main():
             st.plotly_chart(fig_map, use_container_width=True)
 
     with col_scatter:
-        st.markdown("""
+        st.markdown(f"""
         <div class="panel"><div class="panel-header">
             <div class="section-title">💸 Revenue vs Loss</div>
             <div class="panel-tag">CORRELATION</div>
-        </div></div>""", unsafe_allow_html=True)
+        </div>
+        <p style="font-size:0.8rem; color:{T['text_muted']}; margin:0 0 8px 0; font-family:'Outfit',sans-serif;">
+            Bubble size = records compromised. Larger companies don't always suffer proportional losses — 
+            outliers reveal where attack vectors hit hardest relative to company size.
+        </p>
+        </div>""", unsafe_allow_html=True)
 
         if 'company_revenue_usd' in df.columns and 'total_loss_usd' in df.columns:
-            dfc = df[df['company_revenue_usd'] > 0].copy()
+            # Filter out rows with zero values that create invisible dots
+            dfc = df[(df['company_revenue_usd'] > 0) & (df['total_loss_usd'] > 0)].copy()
 
-            # Stronger palette for light mode, vibrant for dark
+            # High-contrast palettes — no white, no light colors
             if is_dark:
                 scatter_colors = ["#00d4ff","#d4af37","#ff4757","#a855f7","#22d3ee","#f59e0b","#ec4899","#10b981"]
             else:
-                scatter_colors = ["#0284c7","#b45309","#dc2626","#7c3aed","#0891b2","#d97706","#be185d","#059669"]
+                scatter_colors = ["#0369a1","#c2410c","#dc2626","#7c3aed","#0e7490","#a16207","#be185d","#047857"]
 
             fig_sc = px.scatter(
                 dfc, x='company_revenue_usd', y='total_loss_usd',
@@ -630,7 +636,7 @@ def main():
             fig_sc.update_traces(
                 marker=dict(
                     opacity=0.85,
-                    line=dict(width=1.5, color='rgba(255,255,255,0.6)' if is_dark else 'rgba(0,0,0,0.15)'),
+                    line=dict(width=1.5, color='rgba(255,255,255,0.6)' if is_dark else 'rgba(0,0,0,0.2)'),
                 )
             )
             st.plotly_chart(fig_sc, use_container_width=True)
