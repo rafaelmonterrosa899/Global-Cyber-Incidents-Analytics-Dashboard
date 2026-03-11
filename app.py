@@ -21,10 +21,16 @@ st.set_page_config(
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
-# Sidebar theme toggle
+def _toggle_theme():
+    st.session_state.theme = "light" if st.session_state._light_toggle else "dark"
+
 st.sidebar.markdown("### 🎨 Appearance")
-light_on = st.sidebar.toggle("☀️ Light Mode", value=st.session_state.theme == "light")
-st.session_state.theme = "light" if light_on else "dark"
+st.sidebar.toggle(
+    "☀️ Light Mode",
+    value=st.session_state.theme == "light",
+    key="_light_toggle",
+    on_change=_toggle_theme,
+)
 is_dark = st.session_state.theme == "dark"
 
 # ─────────────────────────────────────────────
